@@ -10,6 +10,12 @@ def player_selected_character(character, player_id):
 def state_transition(game_phase: GamePhase):
     return {"action": "game_phase_changed", "payload": game_phase.name}
 
+def player_inventory(items):
+    object_names = []
+    for item in items:
+        object_names.append(item.get_object_name())
+    return {"action": "player_inventory", "payload": {"items": object_names}}
+
 def ok_response():
     return {"status": "ok"}
 

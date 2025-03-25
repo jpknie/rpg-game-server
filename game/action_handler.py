@@ -45,9 +45,15 @@ class ActionHandler:
         character_name = data['character_name']
         selected_character = CharacterFactory.create(character_name)
         await self.game.select_character(data['player_id'], selected_character)
+        self.game.game_state_manager.add_all_into_inventory(player_id, selected_character.get_inventory())
+        # def add_into_inventory(self, player_id, item: Item)
         await self.connection_manager.broadcast_all(messages.player_selected_character(character_name, player_id))
         return messages.ok_response()
 
+    async def on_get_inventory(self, data):
+        player_id = data['player_id']
+        items = self.game.game_state_manager.get_inventory(player_id)
+        return messages.player_inventory(items)
 
     async def not_allowed(self, data):
         raise ActionNotAllowed("Something is very wrong")

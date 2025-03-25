@@ -1,5 +1,6 @@
 from enum import Enum
 
+from game.Item import Item
 from game.exceptions import ActionNotAllowed
 
 class GamePhase(Enum):
@@ -21,6 +22,8 @@ class GameStateManager:
     def add_player(self, player_id, player_data):
         if player_id not in self.game_state.players.keys():
             self.game_state.players[player_id] = player_data
+            self.game_state.players[player_id]['inventory'] = []
+            self.game_state.players[player_id]['stats'] = dict()
         else:
             raise ActionNotAllowed(f"Player already registered with id: {player_id}")
 
@@ -35,6 +38,12 @@ class GameStateManager:
 
     def get_players(self):
         return self.game_state.players
+
+    def add_all_into_inventory(self, player_id, items):
+        self.game_state.players[player_id]['inventory'].extend(items)
+
+    def get_inventory(self, player_id):
+        return self.game_state.players[player_id]['inventory']
 
 class Game:
     def __init__(self, max_players=1):
