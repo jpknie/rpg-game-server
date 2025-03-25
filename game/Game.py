@@ -27,11 +27,14 @@ class GameStateManager:
     def remove_player(self, player):
         self.game_state.players.remove(player)
 
-    def get_players(self):
-        return self.game_state.players
-
     def set_game_phase(self, phase):
         self.game_state.game_phase = phase
+
+    def set_character(self, player_id, character):
+        self.game_state.players[player_id]['character'] = character
+
+    def get_players(self):
+        return self.game_state.players
 
 class Game:
     def __init__(self, max_players=1):
@@ -44,6 +47,9 @@ class Game:
 
     async def remove_connected_player(self, websocket):
         self.game_state_manager.remove_player(websocket)
+
+    async def select_character(self, player_id, character):
+        self.game_state_manager.set_character(player_id, character)
 
     async def get_connected_players(self):
         return self.game_state_manager.get_players()

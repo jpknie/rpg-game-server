@@ -2,6 +2,7 @@ from multiprocessing.forkserver import connect_to_new_process
 
 from game import messages
 from game.Game import GamePhase
+from game.character import Thief, Paladin, Cleric, Barbarian, CharacterFactory
 from game.exceptions import ActionNotAllowed
 
 
@@ -37,6 +38,16 @@ class ActionHandler:
         # else should return error message
 
         return messages.ok_response()
+
+    async def on_character_select(self, data):
+        """Character is just simple Thief, Paladin, Mage, Cleric"""
+        player_id = data['player_id']
+        character_name = data['character_name']
+        selected_character = CharacterFactory.create(character_name)
+        await self.game.select_character(data['player_id'], selected_character)
+        await self.connection_manager.broadcast_all(messages.player_selected_character(character_name, player_id))
+        return messages.ok_response()
+
 
     async def not_allowed(self, data):
         raise ActionNotAllowed("Something is very wrong")
