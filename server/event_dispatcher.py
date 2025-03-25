@@ -1,3 +1,6 @@
+from game.exceptions import ActionNotAllowed
+
+
 class EventDispatcher:
     def __init__(self, game):
         self.game = game
@@ -8,4 +11,7 @@ class EventDispatcher:
             self.events[event_type] = handler
 
     async def dispatch(self, event_type, data):
-        return await self.events[event_type](data)
+        if event_type in self.events.keys():
+            return await self.events[event_type](data)
+        else:
+            raise ActionNotAllowed("Unknown action")

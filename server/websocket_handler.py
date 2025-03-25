@@ -8,42 +8,48 @@ from game import messages
 from game.Game import Game
 from game.action_handler import ActionHandler
 from game.exceptions import ActionNotAllowed
+from server.connection_manager import ConnectionManager
 from server.event_dispatcher import EventDispatcher
 
 connected_players = set()
 game = Game()
 event_dispatcher = EventDispatcher(game)
 
-async def broadcast_all(message):
-    for conn in connected_players:
-        await conn.send(json.dumps(message))
+connection_manager = ConnectionManager()
+action_handler = ActionHandler(game, connection_manager)
 
-
-action_handler = ActionHandler(game, broadcast_all)
-
-event_dispatcher.register_event('change_state', action_handler.change_state)
+event_dispatcher.register_event('player_join', action_handler.change_state)
 event_dispatcher.register_event('not_allowed', action_handler.not_allowed)
 
+
 async def websocket_handler(websocket: WebSocketServerProtocol):
-    """WebSocket connection handler."""
-    print(f"Player connected! Total: {len(game.game_state_manager.get_players())}")
-    connected_players.add(websocket)
 
     try:
         async for message in websocket:
             data = json.loads(message)
             action = data.get('action')
             payload = data.get('payload')
+
             try:
+                # This is special case and handled here
+                if action == "player_join":
+                    await connection_manager.add_connection(websocket, payload['player_id'])
+                    print(f"Player connected! Total: {len(connection_manager.get_connections())}")
+
                 response = await event_dispatcher.dispatch(action, payload)
-                await websocket.send(json.dumps(response))
+                await connection_manager.send_to(websocket, response)
+
             except ActionNotAllowed as e:
+                print("ActionNotAllowed: ", e)
                 await websocket.send(json.dumps(messages.action_not_allowed()))
+                #await connection_manager.send_to(websocket, messages.action_not_allowed())
+
     except websockets.exceptions.ConnectionClosed:
-        print("Player disconnected")
+        await connection_manager.remove_connection(websocket)
+
     finally:
-        connected_players.remove(websocket)
-        await game.remove_connected_player(websocket)
+        await connection_manager.remove_connection(websocket)
+        #await game.remove_connected_player(websocket)
 
 
 async def start_server():

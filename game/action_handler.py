@@ -1,3 +1,5 @@
+from multiprocessing.forkserver import connect_to_new_process
+
 from game import messages
 from game.exceptions import ActionNotAllowed
 
@@ -14,13 +16,22 @@ def singleton(cls):
 
 @singleton
 class ActionHandler:
-    def __init__(self, _game, broadcast_fn):
-        self._game = _game
-        self.broadcast_fn = broadcast_fn
+    def __init__(self, game, connection_manager):
+        self.game = game
+        self.connection_manager = connection_manager
+
+    async def register_connection(self, connection):
+        await self.connection_manager.add_connection(connection)
 
     async def change_state(self, data):
-        await self._game.add_connected_player(data)
-        await self.broadcast_fn(messages.player_joined_message(data))
+        player_id = data['player_id']
+        player_name = data['player_name']
+        # Populate tentative player data here, for example player name etc.
+        player_data = {'player_name': player_name}
+        await self.game.add_connected_player(player_id, player_data)
+        await self.connection_manager.broadcast_all_but(player_id, messages.player_joined_message(data))
+        # else should return error message
+
         return messages.ok_response()
 
     async def not_allowed(self, data):
