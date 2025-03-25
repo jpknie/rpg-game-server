@@ -9,7 +9,7 @@ class ConnectionManager:
         self.connections = {}
 
     async def broadcast_all(self, message):
-        for conn in self.connections:
+        for conn in self.connections.values():
             await conn.send(json.dumps(message))
 
     async def broadcast_all_but(self, player_id, message):

@@ -18,7 +18,7 @@ event_dispatcher = EventDispatcher(game)
 connection_manager = ConnectionManager()
 action_handler = ActionHandler(game, connection_manager)
 
-event_dispatcher.register_event('player_join', action_handler.change_state)
+event_dispatcher.register_event('player_join', action_handler.on_player_joined)
 event_dispatcher.register_event('not_allowed', action_handler.not_allowed)
 
 
