@@ -46,10 +46,7 @@ class ActionHandler:
         player_id = data['player_id']
         direction = data['direction']
         player_is_on = await self.game.move_player(player_id, direction)
-        if player_is_on == TileType.TRAP:
-            # Decrease HP by some amount
-            pass
-
+       
         return messages.ok_response()
 
     async def on_character_select(self, data):
@@ -63,7 +60,7 @@ class ActionHandler:
         await self.connection_manager.broadcast_all(messages.player_selected_character(character_name, player_id))
 
         # if characters are selected for everyone game should start
-        if await self.game.characters_checked():
+        if await self.game.all_characters_selected():
             await self.game.transition_to_game()
             await self.connection_manager.broadcast_all(messages.state_transition(GamePhase.IN_GAME))
 
