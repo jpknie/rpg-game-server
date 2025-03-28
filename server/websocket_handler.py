@@ -19,8 +19,10 @@ connection_manager = ConnectionManager()
 action_handler = ActionHandler(game, connection_manager)
 
 event_dispatcher.register_event('player_join', action_handler.on_player_joined)
+event_dispatcher.register_event("player_move", action_handler.on_player_move)
+event_dispatcher.register_event('player_inventory', action_handler.on_get_inventory)
+
 event_dispatcher.register_event('character_select', action_handler.on_character_select)
-event_dispatcher.register_event('get_inventory', action_handler.on_get_inventory)
 event_dispatcher.register_event('not_allowed', action_handler.not_allowed)
 
 

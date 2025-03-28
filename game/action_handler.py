@@ -1,7 +1,7 @@
 from multiprocessing.forkserver import connect_to_new_process
 
 from game import messages
-from game.Game import GamePhase
+from game.Game import GamePhase, TileType
 from game.character import Thief, Paladin, Cleric, Barbarian, CharacterFactory
 from game.exceptions import ActionNotAllowed
 
@@ -26,6 +26,9 @@ class ActionHandler:
         await self.connection_manager.add_connection(connection)
 
     async def on_player_joined(self, data):
+        if self.game.game_state_manager.get_game_phase() == GamePhase.IN_GAME:
+            raise ActionNotAllowed("Game is already started")
+
         player_id = data['player_id']
         player_name = data['player_name']
         # Populate tentative player data here, for example player name etc.
@@ -39,6 +42,16 @@ class ActionHandler:
 
         return messages.ok_response()
 
+    async def on_player_move(self, data):
+        player_id = data['player_id']
+        direction = data['direction']
+        player_is_on = await self.game.move_player(player_id, direction)
+        if player_is_on == TileType.TRAP:
+            # Decrease HP by some amount
+            pass
+
+        return messages.ok_response()
+
     async def on_character_select(self, data):
         """Character is just simple Thief, Paladin, Mage, Cleric"""
         player_id = data['player_id']
@@ -48,6 +61,12 @@ class ActionHandler:
         self.game.game_state_manager.add_all_into_inventory(player_id, selected_character.get_inventory())
         # def add_into_inventory(self, player_id, item: Item)
         await self.connection_manager.broadcast_all(messages.player_selected_character(character_name, player_id))
+
+        # if characters are selected for everyone game should start
+        if await self.game.characters_checked():
+            await self.game.transition_to_game()
+            await self.connection_manager.broadcast_all(messages.state_transition(GamePhase.IN_GAME))
+
         return messages.ok_response()
 
     async def on_get_inventory(self, data):
