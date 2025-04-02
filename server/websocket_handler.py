@@ -58,7 +58,7 @@ async def websocket_handler(websocket: WebSocketServerProtocol):
 
 async def start_server():
     """Start the WebSocket server."""
-    server = await websockets.serve(websocket_handler, "0.0.0.0", 8080)
+    server = await websockets.serve(websocket_handler, "0.0.0.0", 3333)
     print(f"Server listening on ws://0.0.0.0:8080")
     await server.wait_closed()
 

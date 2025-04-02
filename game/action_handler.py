@@ -1,7 +1,7 @@
 from multiprocessing.forkserver import connect_to_new_process
 
 from game import messages
-from game.Game import GamePhase, TileType
+from game.Game import GamePhase
 from game.character import Thief, Paladin, Cleric, Barbarian, CharacterFactory
 from game.exceptions import ActionNotAllowed
 
@@ -33,10 +33,10 @@ class ActionHandler:
         player_name = data['player_name']
         # Populate tentative player data here, for example player name etc.
         player_data = {'player_name': player_name}
-        await self.game.add_connected_player(player_id, player_data)
+        self.game.add_connected_player(player_id, player_data)
         await self.connection_manager.broadcast_all_but(player_id, messages.player_joined_message(data))
-        if await self.game.has_max_players():
-            await self.game.transition_to_character_creation()
+        if self.game.has_max_players():
+            self.game.transition_to_character_creation()
             await self.connection_manager.broadcast_all(messages.state_transition(GamePhase.CHARACTER_CREATION))
         # else should return error message
 
@@ -45,7 +45,7 @@ class ActionHandler:
     async def on_player_move(self, data):
         player_id = data['player_id']
         direction = data['direction']
-        player_is_on = await self.game.move_player(player_id, direction)
+        player_is_on = self.game.move_player(player_id, direction)
        
         return messages.ok_response()
 
@@ -54,15 +54,18 @@ class ActionHandler:
         player_id = data['player_id']
         character_name = data['character_name']
         selected_character = CharacterFactory.create(character_name)
-        await self.game.select_character(data['player_id'], selected_character)
+        self.game.select_character(data['player_id'], selected_character)
         self.game.game_state_manager.add_all_into_inventory(player_id, selected_character.get_inventory())
         # def add_into_inventory(self, player_id, item: Item)
         await self.connection_manager.broadcast_all(messages.player_selected_character(character_name, player_id))
 
         # if characters are selected for everyone game should start
-        if await self.game.all_characters_selected():
-            await self.game.transition_to_game()
+        if self.game.all_characters_selected():
+            self.game.transition_to_game()
+            self.game.game_state_manager.setup_player_positions()
+            # I should initialize game world here and send world data to all players
             await self.connection_manager.broadcast_all(messages.state_transition(GamePhase.IN_GAME))
+            await self.connection_manager.broadcast_all(messages.game_world(self.game.game_state_manager.get_game_world()))
 
         return messages.ok_response()
 

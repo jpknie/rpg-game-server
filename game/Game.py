@@ -34,6 +34,28 @@ class GameStateManager:
 
     def set_player_position(self, player_id, position):
         self.game_state.players[player_id]['position'] = position
+    
+    def update_player_position(self, player_id, direction):
+        if direction == "SW":
+            self.game_state.players[player_id]['position'][0] -= 1
+            self.game_state.players[player_id]['position'][1] -= 1
+        elif direction == "S":
+            self.game_state.players[player_id]['position'][1] -= 1
+        elif direction == "SE":
+            self.game_state.players[player_id]['position'][0] += 1
+            self.game_state.players[player_id]['position'][1] -= 1
+        elif direction == "E": 
+            self.game_state.players[player_id]['position'][0] += 1
+        elif direction == "NE": 
+            self.game_state.players[player_id]['position'][0] += 1
+            self.game_state.players[player_id]['position'][1] += 1
+        elif direction == "N":  
+            self.game_state.players[player_id]['position'][1] += 1
+        elif direction == "NW": 
+            self.game_state.players[player_id]['position'][0] -= 1
+            self.game_state.players[player_id]['position'][1] += 1
+        elif direction == "W":
+            self.game_state.players[player_id]['position'][0] -= 1
 
     def remove_player(self, player):
         self.game_state.players.remove(player)
@@ -43,6 +65,20 @@ class GameStateManager:
 
     def get_game_phase(self):
         return self.game_state.game_phase
+    
+    def get_game_world(self):
+        return self.game_state.game_world
+    
+    def is_walkable(self, x, y):
+        return self.game_state.game_world.is_walkable(x, y)
+    
+    def get_player_position(self, player_id):
+        return self.game_state.players[player_id]['position']
+    
+    # Let's setup player positions at hard coded place for now for example [2, 2], [3, 3], [4, 4]...
+    def setup_player_positions(self):
+        for i, player in enumerate(self.game_state.players.values()):
+            player['position'] = [i + 2, i + 2]
 
     def set_character(self, player_id, character):
         self.game_state.players[player_id]['character'] = character
@@ -54,7 +90,16 @@ class GameStateManager:
         self.game_state.players[player_id]['inventory'].extend(items)
 
     def drop_from_inventory(self, player_id, item):
-        pass # todo
+        if item in self.game_state.players[player_id]['inventory']:
+            self.game_state.players[player_id]['inventory'].remove(item)
+        else:
+            raise ActionNotAllowed(f"Item {item} not found in inventory of player {player_id}")
+        
+    def add_into_inventory(self, player_id, item):
+        if item not in self.game_state.players[player_id]['inventory']:
+            self.game_state.players[player_id]['inventory'].append(item)
+        else:
+            raise ActionNotAllowed(f"Item {item} already in inventory of player {player_id}")
 
     def get_inventory(self, player_id):
         return self.game_state.players[player_id]['inventory']
@@ -98,5 +143,15 @@ class Game:
         # 3) If there's trap or pickable item just move on it and return the object or trap (or something)
         # self.game_state.world[]
         # self.game_world.is_walkable()
-        pass
+        if self.get_game_world().is_walkable(self.game_state_manager.get_player_position(player_id)[0], 
+                                    self.game_state_manager.get_player_position(player_id)[1]):
+            self.game_state_manager.update_player_position(player_id, direction)
+        else:
+            raise ActionNotAllowed(f"Player {player_id} cannot move to {direction}")
+    
+    def get_player_position(self, player_id):
+        return self.game_state_manager.get_player_position(player_id)
+    
+    def get_game_world(self):
+        return self.game_state_manager.get_game_world()
 

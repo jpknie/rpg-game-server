@@ -5,6 +5,21 @@ class GameWorld:
         self.width = width
         self.height = height
         self.grid = self._generate_grid()
+    
+    def to_dict(self):
+        """Convert the GameWorld to a dictionary for serialization."""
+        return {
+            "width": self.width,
+            "height": self.height,
+            "grid": self.grid
+        }
+
+    @classmethod
+    def from_dict(cls, data):
+        """Recreate a GameWorld instance from a dictionary."""
+        instance = cls(data["width"], data["height"])
+        instance.grid = data["grid"]
+        return instance
 
     def _generate_grid(self):
         grid = []

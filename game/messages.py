@@ -10,6 +10,9 @@ def player_selected_character(character, player_id):
 def state_transition(game_phase: GamePhase):
     return {"action": "game_phase_changed", "payload": game_phase.name}
 
+def game_world(game_world):
+    return {"action": "game_world", "payload": game_world.to_dict()}
+
 def player_inventory(items):
     object_names = []
     for item in items:
